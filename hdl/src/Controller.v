@@ -287,6 +287,7 @@ module InstrFetch #(
     
 endmodule
 
+//TODO: Add addr counter unit!!!
 module RAMDriver #(
     parameter DADDRESS_WIDTH = `DATA_ADDR_W,
     parameter ALLENGTH_WIDTH = `ALLOC_LEN_W,
@@ -433,27 +434,38 @@ module Headers #(
     input  wire              clk, rst, cmd,
     input  wire [IWIDTH-1:0] index,
     input  wire [AWIDTH-1:0] length,
-    output reg  [AWIDTH-1:0] head_offset
+    output wire [AWIDTH-1:0] head_offset
 );
     integer i;
     reg [AWIDTH-1:0] mas [0:2**IWIDTH-1];
     wire cell_reset = (mas[index] == length);
+
+    initial begin
+        for (i = 0; i < 2**IWIDTH; i = i + 1) begin
+            mas[index] <= `GND_BUS(AWIDTH);
+        end
+    end
 
     localparam [0:0] READ_HEAD  = 1'b1;
     localparam [0:0] WRITE_HEAD = 1'b0;
 
     always @(posedge clk) begin
         if (!rst) begin
-            case (cmd)
-                READ_HEAD  : head_offset <= mas[index];
-                WRITE_HEAD : mas[index] <= (cell_reset)? {AWIDTH{1'b0}} : mas[index] + 1'b1;
-            endcase
+            if (cmd == WRITE_HEAD) begin
+                mas[index] <= (cell_reset)? {AWIDTH{1'b0}} : mas[index] + 1'b1;
+            end
+            // case (cmd)
+            //     READ_HEAD  : head_offset <= mas[index];
+            //     WRITE_HEAD : 
+            // endcase
         end else begin
             for (i = 0; i < 2**IWIDTH; i = i + 1) begin
                 mas[index] <= `GND_BUS(AWIDTH);
             end
         end
     end
+
+    assign head_offset = (cmd == READ_HEAD)? mas[index] : `GND_BUS(AWIDTH);
 
 `ifdef DEBUG
     reg [80-1:0] header_cmd_ascii;
