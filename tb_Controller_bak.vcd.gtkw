@@ -1,0 +1,64 @@
+[*]
+[*] GTKWave Analyzer v3.3.110 (w)1999-2020 BSI
+[*] Mon Aug 30 18:37:32 2021
+[*]
+[dumpfile] "D:\Projects\fpga\UPSAMPLER_v1\tb_Controller.vcd"
+[dumpfile_mtime] "Mon Aug 30 18:21:39 2021"
+[dumpfile_size] 9286
+[savefile] "D:\Projects\fpga\UPSAMPLER_v1\tb_Controller_bak.vcd.gtkw"
+[timestart] 0
+[size] 958 1018
+[pos] 952 -1
+*-15.782585 76980 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_Controller.
+[treeopen] tb_Controller.u_top.
+[treeopen] tb_Controller.u_top.u_RAMDriver.
+[treeopen] tb_Controller.u_top.u_RAMDriver.u_RingBuffer.
+[sst_width] 192
+[signals_width] 234
+[sst_expanded] 1
+[sst_vpaned_height] 304
+@28
+tb_Controller.clk
+tb_Controller.rst
+tb_Controller.en
+@200
+-
+@22
+[color] 7
++{tb_Controller.instr_word[49:0]} tb_Controller.instr_word[49:0]
+@28
+[color] 7
+tb_Controller.lstg_f
+[color] 7
+tb_Controller.upse_f
+@22
+[color] 7
+tb_Controller.vector_id[3:0]
+[color] 7
+tb_Controller.result_reg[4:0]
+[color] 7
+tb_Controller.error_reg[4:0]
+[color] 7
+tb_Controller.vector_len[9:0]
+[color] 7
+tb_Controller.data_ptr[11:0]
+[color] 7
+tb_Controller.coef_ptr[11:0]
+@200
+-
+@820
+tb_Controller.u_top.u_FSM.ostate_ascii[399:0]
+@28
+tb_Controller.dut_state[2:0]
+@200
+-
+@22
+tb_Controller.u_top.u_RAMDriver.rbuf_coef_addr[11:0]
+tb_Controller.u_top.u_RAMDriver.rbuf_data_addr[11:0]
+tb_Controller.u_top.u_RAMDriver.head_offset[9:0]
+tb_Controller.u_top.u_RAMDriver.data_ptr[11:0]
+@23
+tb_Controller.u_top.u_RAMDriver.data_head_addr[11:0]
+[pattern_trace] 1
+[pattern_trace] 0

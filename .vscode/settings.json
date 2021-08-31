@@ -1,0 +1,14 @@
+{
+    "python.pythonPath": "C:\\tools\\conda\\python.exe",
+    "files.associations": {
+        "algorithm": "c"
+    }
+    // ,
+    // "verilog.linting.iverilog.arguments": "-yd/Projects/fpga/UPSAMPLER_v1/hdl/include/"
+    ,
+    "verilog.linting.linter": "iverilog",
+    // "verilog.linting.verilator.useWSL": true,
+    // "verilog.linting.verilator.arguments": "--lint-only -I/mnt/d/Projects/fpga/UPSAMPLER_v1/hdl/include/ --language 1364-2005",
+    "verilog.linting.iverilog.arguments": "-g2005 -I hdl/include/ simulation/ hdl/src/",
+    "teroshdl.linter.verilog.linter.icarus.arguments": "-g2005 -I hdl/include/ simulation/ hdl/src/"
+}
