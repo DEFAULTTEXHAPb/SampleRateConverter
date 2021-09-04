@@ -1,12 +1,12 @@
-`include "global_define.vh"
-
 `timescale 1ns / 1ps
+`define GND_BUS(w) {w{1'b0}}
+
 module top #(
-    parameter VEC_ID_WIDTH = `VEC_ID_W,
-    parameter REGFILE_ADDR_WIDTH = `REGFILE_ADDR_W,
-    parameter ALLOC_LENGTH_WIDTH = `ALLOC_LEN_W,
-    parameter DATA_ADDR_WIDTH = `DATA_ADDR_W,
-    parameter INSTR_ADDR_WIDTH = $clog2(`PROG_SIZE)
+    parameter VEC_ID_WIDTH = 3,
+    parameter REGFILE_ADDR_WIDTH = 3,
+    parameter ALLOC_LENGTH_WIDTH = 4,
+    parameter DATA_ADDR_WIDTH = 4,
+    parameter INSTR_ADDR_WIDTH = $clog2(32)
 )(
     input clk, rst, en, prog,
     input [INSTR_WIDTH-1:0]  instr_word,
@@ -19,7 +19,7 @@ module top #(
     output wire [REGFILE_ADDR_WIDTH-1:0] ar1, ar2, ard
 );
 
-    localparam INSTR_WIDTH = 1 + 1 + VEC_ID_WIDTH + 2*REGFILE_ADDR_WIDTH + ALLOC_LENGTH_WIDTH + 2*DATA_ADDR_WIDTH;
+    localparam INSTR_WIDTH = 1 + 1 + VEC_ID_WIDTH + 2*REGFILE_ADDR_WIDTH + 3*DATA_ADDR_WIDTH;
 
     wire en_devs = ~prog && en;
     wire vector_pass, last_stage, last_vector;
@@ -47,72 +47,69 @@ module top #(
         .pc      ( pc      )
     );
 
-    wire readh_incrh, read_write,
+    wire h_init, a_init, cnt,
          res_err, rf_rw, get_reg, new_in, new_out;
 
     OutLut u_OutLut(
-        .fsm_state   ( ostate      ),
-        .pc_clr      ( pc_clr      ),
-        .pc_incr     ( pc_incr     ),
-        .fetch       ( fetch       ),
-        .readh_incrh ( readh_incrh ),
-        .read_write  ( read_write  ),
-        .res_err     ( res_err     ),
-        .rf_rw       ( rf_rw       ),
-        .get_reg     ( get_reg     ),
-        .new_in      ( new_in      ),
-        .new_out     ( new_out     )
+        .fsm_state ( ostate    ),
+        .pc_clr    ( pc_clr    ),
+        .pc_incr   ( pc_incr   ),
+        .fetch     ( fetch     ),
+        .h_init    ( h_init    ),
+        .a_init    ( a_init    ),
+        .cnt       ( cnt       ),
+        .res_err   ( res_err   ),
+        .rf_rw     ( rf_rw     ),
+        .get_reg   ( get_reg   ),
+        .new_in    ( new_in    ),
+        .new_out   ( new_out   )
     );
 
     wire [VEC_ID_WIDTH-1:0] vector_id;
     wire [REGFILE_ADDR_WIDTH-1:0] result_reg, error_reg;
     wire [ALLOC_LENGTH_WIDTH-1:0] vector_len;
-    wire [DATA_ADDR_WIDTH-1:0] data_ptr, coef_ptr;
+    wire [DATA_ADDR_WIDTH-1:0] data_uptr, data_lptr, coef_ptr;
 
     InstrFetch#(
         .VIDWIDTH   ( VEC_ID_WIDTH ),
         .RFAWIDTH   ( REGFILE_ADDR_WIDTH ),
-        .ALLWIDTH   ( ALLOC_LENGTH_WIDTH ),
         .DAWIDTH    ( DATA_ADDR_WIDTH )
-     )u_InstrFetch(
+    )u_InstrFetch(
         .clk        ( clk        ),
         .rst        ( rst        ),
         .fetch      ( fetch      ),
         .instr_word ( instr_word ),
-        .lstg_f     ( last_stage ),
-        .upse_f     ( last_vector),
+        .lstg_f     ( lstg_f     ),
+        .upse_f     ( upse_f     ),
         .vector_id  ( vector_id  ),
         .result_reg ( result_reg ),
         .error_reg  ( error_reg  ),
-        .vector_len ( vector_len ),
-        .data_ptr   ( data_ptr   ),
+        .data_uptr  ( data_uptr  ),
+        .data_lptr  ( data_lptr  ),
         .coef_ptr   ( coef_ptr   )
     );
 
 
+
     RAMDriver#(
-        .DADDRESS_WIDTH ( DATA_ADDR_WIDTH ),
-        .ALLENGTH_WIDTH ( ALLOC_LENGTH_WIDTH ),
-        .VECINDEX_WIDTH ( VEC_ID_WIDTH )
-     )u_RAMDriver(
-        .clk            ( clk            ),
-        .rst            ( rst            ),
-        .en             ( en_devs        ),
-        .readh_incrh    ( readh_incrh    ),
-        .prog           ( prog           ),
-        .read_write     ( read_write     ),
-        .index          ( vector_id      ),
-        .data_ptr       ( data_ptr       ),
-        .coef_ptr       ( coef_ptr       ),
-        .vector_len     ( vector_len     ),
-        .en_ram_pa      ( en_ram_pa      ),
-        .en_ram_pb      ( en_ram_pb      ),
-        .vector_pass    ( vector_pass    ),
-        .wr_ram_pa      ( wr_ram_pa      ),
-        .wr_ram_pb      ( wr_ram_pb      ),
-        .data_addr      ( data_addr      ),
-        .coef_addr      ( coef_addr      )
+        .DATA_ADDRESS_WIDTH ( DATA_ADDR_WIDTH ),
+        .DATA_OFFSET_WIDTH  ( ALLOC_LENGTH_WIDTH ),
+        .VECTOR_INDEX_WIDTH ( VEC_ID_WIDTH )
+    )u_RAMDriver(
+        .clk                ( clk                ),
+        .rst                ( rst                ),
+        .h_init             ( h_init             ),
+        .a_init             ( a_init             ),
+        .cnt                ( cnt                ),
+        .data_uptr          ( data_uptr          ),
+        .data_lptr          ( data_lptr          ),
+        .coef_ptr           ( coef_ptr           ),
+        .vector_id          ( vector_id          ),
+        .conv_pass          ( conv_pass          ),
+        .data_addr          ( data_addr          ),
+        .coef_addr          ( coef_addr          )
     );
+
 
 
     RegFileDriver#(
@@ -228,7 +225,7 @@ module OutLut (
     input [2:0] fsm_state,
     output reg pc_clr, pc_incr,
     output reg fetch,
-    output reg readh_incrh, read_write,
+    output reg h_init, a_init, cnt, 
     output reg res_err, rf_rw, get_reg,
     output reg new_in, new_out
 );
@@ -247,8 +244,9 @@ module OutLut (
         pc_clr      = (fsm_state == S7);
         pc_incr     = (fsm_state == S8);
         fetch       = (fsm_state == S1);
-        readh_incrh = (fsm_state == S4)||(fsm_state == S2);
-        read_write  = (fsm_state == S3);
+        h_init      = (fsm_state == S1);
+        a_init      = (fsm_state == S2);
+        cnt         = (fsm_state == S3);
         res_err     = (fsm_state == S4);
         rf_rw       = (fsm_state == S4)||(fsm_state == S5)||(fsm_state == S7);
         get_reg     = (fsm_state == S2)||(fsm_state == S7);
@@ -259,10 +257,9 @@ module OutLut (
 endmodule
 
 module InstrFetch #(
-    parameter VIDWIDTH = `VEC_ID_W,
-    parameter RFAWIDTH = `REGFILE_ADDR_W,
-    parameter ALLWIDTH = `ALLOC_LEN_W,
-    parameter DAWIDTH  = `DATA_ADDR_W
+    parameter VIDWIDTH = 3,
+    parameter RFAWIDTH = 3,
+    parameter DAWIDTH  = 4
 )(
     input                       clk, rst, fetch,
     input      [INSTRWIDTH-1:0] instr_word,
@@ -271,17 +268,17 @@ module InstrFetch #(
     output reg [VIDWIDTH-1:0]   vector_id,
     output reg [RFAWIDTH-1:0]   result_reg,
     output reg [RFAWIDTH-1:0]   error_reg,
+    output reg [DAWIDTH-1:0]    data_uptr,
     output reg [DAWIDTH-1:0]    data_lptr,
-    output reg [DAWIDTH-1:0]    data_fptr,
     output reg [DAWIDTH-1:0]    coef_ptr
 );
     localparam INSTRWIDTH = 1 + 1 + VIDWIDTH + 2*RFAWIDTH + 3*DAWIDTH;
 
     always @(posedge clk) begin
         if (!rst) begin
-            if (fetch) {lstg_f, upse_f, vector_id, result_reg, error_reg, data_lptr, data_fptr, coef_ptr} <= instr_word;
+            if (fetch) {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= instr_word;
         end else begin
-            {lstg_f, upse_f, vector_id, result_reg, error_reg, data_lptr, data_fptr, coef_ptr} <= `GND_BUS(`ALLOC_INSTR_W);
+            {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= `GND_BUS(INSTRWIDTH);
         end
     end
     
@@ -290,12 +287,11 @@ endmodule
 //TODO: Add addr counter unit!!!
 module RAMDriver #(
     parameter DATA_ADDRESS_WIDTH = 12,
-    parameter DATA_OFFSET_WIDTH = 10,
+    parameter DATA_OFFSET_WIDTH = 5,
     parameter VECTOR_INDEX_WIDTH = 5
 )(
     input  wire                          clk,
     input  wire                          rst,
-    input  wire                          rbuf_on,
     input  wire                          h_init,
     input  wire                          a_init,
     input  wire                          cnt,
@@ -307,6 +303,27 @@ module RAMDriver #(
     output wire [DATA_ADDRESS_WIDTH-1:0] data_addr,
     output wire [DATA_ADDRESS_WIDTH-1:0] coef_addr
 );
+
+    wire                          data_count_fin;
+    wire                          coef_count_fin;
+    wire                          pass = data_count_fin & coef_count_fin;
+
+    wire [DATA_OFFSET_WIDTH-1:0]  head_offset;
+    wire [DATA_ADDRESS_WIDTH-1:0] rb_data_addr;
+    wire [DATA_ADDRESS_WIDTH-1:0] init_data_addr = (cnt == 1'b0)? head_offset + data_uptr : {DATA_ADDRESS_WIDTH{1'bz}};
+    wire [DATA_OFFSET_WIDTH-1:0]  length = data_uptr - data_lptr;
+
+    assign data_addr = (cnt == 1'b1)? rb_data_addr : init_data_addr;
+    assign conv_pass = pass;
+
+`ifdef DEBUG
+    always @(*) begin
+        if ((cnt == 1'b1)&((data_count_fin ^ coef_count_fin) == 1'b1)) begin
+            $display("Unable word! (Unit: %m; File: Controller.v; line: 117; time: %t)", $time);
+            $finish(2);
+        end
+    end
+`endif
 
     DataRingBuffer#(
         .DATA_ADDRESS_WIDTH ( DATA_ADDRESS_WIDTH ),
@@ -320,7 +337,7 @@ module RAMDriver #(
         .data_lptr          ( data_lptr          ),
         .head_offset        ( head_offset        ),
         .data_count_fin     ( data_count_fin     ),
-        .data_addr          ( data_addr          )
+        .data_addr          ( rb_data_addr       )
     );
 
     HeadRegs#(
@@ -330,9 +347,9 @@ module RAMDriver #(
         .clk               ( clk               ),
         .rst               ( rst               ),
         .init              ( h_init            ),
-        .head_inc          ( head_inc          ),
-        .read_reg          ( read_reg          ),
-        .index             ( index             ),
+        .head_inc          ( pass              ),
+        .read_reg          ( a_init            ),
+        .index             ( vector_id         ),
         .length            ( length            ),
         .head_offset       ( head_offset       )
     );
@@ -407,6 +424,7 @@ module DataRingBuffer #(
     end
 
 `ifdef DEBUG
+    wire cmd = {init, cnt};
     reg [8*25-1:0] head_cmd_ascii;
     always @(cmd) begin : ascii_debug
         case (cmd)
@@ -430,7 +448,7 @@ module HeadRegs #(
     input  wire                          head_inc,
     input  wire                          read_reg,
     input  wire [VECTOR_INDEX_WIDTH-1:0] index,
-    input  wire [VECTOR_INDEX_WIDTH-1:0] length,
+    input  wire [DATA_OFFSET_WIDTH-1:0]  length,
     output wire [DATA_OFFSET_WIDTH-1:0]  head_offset
 );
 
@@ -448,7 +466,7 @@ module HeadRegs #(
     
     assign head_offset = (read_reg == 1'b1)? reg_collection[index] : {DATA_OFFSET_WIDTH{1'bz}};
     assign cmd = {init, head_inc, read_reg};
-    assign cell_reset = (mas[index] == length_reg);
+    assign cell_reset = (reg_collection[index] == length_reg);
 
     always @(posedge clk) begin : head_seq_process
         if (rst) begin
@@ -459,7 +477,7 @@ module HeadRegs #(
         end else begin
             case (cmd)
                 LOAD_LENGTH    : length_reg <= length;
-                HEAD_INCREMENT : mas[index] <= (cell_reset)? {AWIDTH{1'b0}} : mas[index] + 1'b1;
+                HEAD_INCREMENT : reg_collection[index] <= (cell_reset == 1'b1)? {DATA_OFFSET_WIDTH{1'b0}} : reg_collection[index] + 1'b1;
                 SLEEP          : /* SLEEP =) */;
                 default: begin : error_case
 `ifdef DEBUG
@@ -509,7 +527,7 @@ module CoefAddrCounter #(
     reg [DATA_OFFSET_WIDTH-1:0]  length_reg;
 
     assign coef_count_fin = (coef_offset_cnt == length_reg);
-    assign coef_addr = (cnt == 1'b1) coef_offset_cnt + coef_ptr_reg : {DATA_ADDRESS_WIDTH{1'bz}};
+    assign coef_addr = (cnt == 1'b1)? coef_offset_cnt + coef_ptr_reg : {DATA_ADDRESS_WIDTH{1'bz}};
 
     always @(posedge clk) begin : coef_offset_counting
         if (clr) begin
@@ -551,7 +569,7 @@ module CoefAddrCounter #(
 endmodule
 
 module RegFileDriver #(
-    parameter WIDTH = `REGFILE_ADDR_W
+    parameter WIDTH = 3
 ) (
     input wire             clk, rst, en,
     input wire             res_err, rf_rw, get_reg,
@@ -560,42 +578,31 @@ module RegFileDriver #(
     output reg [WIDTH-1:0] ar1, ar2, ard
 );
 
-always @(posedge clk) begin
-    if (!rst) begin
-        if (en) begin
-            rw <= rf_rw;
-            casez ({rf_rw, res_err})
-                2'b1z: begin
-                    ar1 <= (get_reg)? result_reg : result_reg - 1'b0;
-                    ar2 <= (get_reg)? {WIDTH{1'bz}} : error_reg;
-                    ard <= {WIDTH{1'bz}};
-                end
-                2'b01: begin
-                    ar1 <= {WIDTH{1'bz}};
-                    ar2 <= {WIDTH{1'bz}};
-                    ard <= result_reg;
-                end
-                2'b00: begin
-                    ar1 <= {WIDTH{1'bz}};
-                    ar2 <= {WIDTH{1'bz}};
-                    ard <= error_reg;
-                end
-            endcase
+    always @(posedge clk) begin
+        if (!rst) begin
+            if (en) begin
+                rw <= rf_rw;
+                casez ({rf_rw, res_err})
+                    2'b1z: begin
+                        ar1 <= (get_reg)? result_reg : result_reg - 1'b0;
+                        ar2 <= (get_reg)? {WIDTH{1'bz}} : error_reg;
+                        ard <= {WIDTH{1'bz}};
+                    end
+                    2'b01: begin
+                        ar1 <= {WIDTH{1'bz}};
+                        ar2 <= {WIDTH{1'bz}};
+                        ard <= result_reg;
+                    end
+                    2'b00: begin
+                        ar1 <= {WIDTH{1'bz}};
+                        ar2 <= {WIDTH{1'bz}};
+                        ard <= error_reg;
+                    end
+                endcase
+            end
+        end else begin
+            {ar1, ar2, ard, rw} <= `GND_BUS(3*WIDTH+1);
         end
-    end else begin
-        {ar1, ar2, ard, rw} <= `GND_BUS(3*WIDTH+1);
     end
-end
-    
-endmodule
-/*
-module CPUProgInterface #(
-    parameter BUS_WIDTH = 32,
-    parameter ADDR_WIDTH = 32
-) (
-    // ! May be use axi-stream
 
-);
-    
 endmodule
-*/

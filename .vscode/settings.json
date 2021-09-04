@@ -6,11 +6,11 @@
     // ,
     // "verilog.linting.iverilog.arguments": "-yd/Projects/fpga/UPSAMPLER_v1/hdl/include/"
     ,
-    //"verilog.linting.linter": "iverilog",
+    "verilog.linting.linter": "iverilog",
     // "verilog.linting.verilator.useWSL": true,
     // "verilog.linting.verilator.arguments": "--lint-only -I/mnt/d/Projects/fpga/UPSAMPLER_v1/hdl/include/ --language 1364-2005",
-    //"verilog.linting.iverilog.arguments": "-g2005 -I hdl/include/ -I simulation/ -I hdl/src/",
-    "teroshdl.linter.verilog.linter.a": "Verilator",
-    "teroshdl.linter.verilog.linter.icarus.arguments": "-g2005 -I hdl/include/ -I simulation/ -I hdl/src/",
-    "teroshdl.linter.verilog.linter.verilator.arguments": "--lint-only -Wall --language 1364-2005 -Ihdl/include/ -Isimulation/ -Ihdl/src/"
+    "verilog.linting.iverilog.arguments": "-g2005 -I hdl/include/ -I simulation/ -I hdl/src/",
+    // "teroshdl.linter.verilog.linter.a": "Verilator",
+    // "teroshdl.linter.verilog.linter.icarus.arguments": "-g2005 -I hdl/include/ -I simulation/ -I hdl/src/",
+    // "teroshdl.linter.verilog.linter.verilator.arguments": "--lint-only -Wall --language 1364-2005 -Ihdl/include/ -Isimulation/ -Ihdl/src/"
 }
