@@ -1,8 +1,0 @@
-[verilog]
-include_paths = ["hdl/include"]
-
-[option]
-linter = true
-
-[rules]
-blocking_assignment_in_always_ff = true

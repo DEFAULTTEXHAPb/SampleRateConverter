@@ -1,4 +1,4 @@
-`include "Controller.v"
+`include "controller/ctrl_top.v"
 `include "global_define.vh"
 
 module tb_Controller;

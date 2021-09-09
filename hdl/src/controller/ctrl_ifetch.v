@@ -7,9 +7,9 @@
 //! upsampling process
 
 module InstrFetch #(
-    parameter VIDWIDTH = `VEC_ID_W,       //! Vector ID instruction field width
-    parameter RFAWIDTH = `REGFILE_ADDR_W, //! Register address instruction field width
-    parameter DAWIDTH  = `DATA_ADDR_W     //! Data RAM address instruction field width
+    parameter VIDWIDTH = 5,       //! Vector ID instruction field width
+    parameter RFAWIDTH = 5, //! Register address instruction field width
+    parameter DAWIDTH  = 12     //! Data RAM address instruction field width
 )(
     input                       clk,        //! __*Clock*__
     input                       rst,        //! __*Reset*__
@@ -27,12 +27,16 @@ module InstrFetch #(
     //! Allocation instruction width
     localparam INSTRWIDTH = 1 + 1 + VIDWIDTH + 2*RFAWIDTH + 3*DAWIDTH;
 
+    initial begin
+        {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} = {INSTRWIDTH{1'b0}};
+    end
+
     //! Instruction fetch process
     always @(posedge clk) begin : fetch_process
         if (!rst) begin
             if (fetch) {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= instr_word;
         end else begin
-            {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= `GND_BUS(`ALLOC_INSTR_W);
+            {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= {INSTRWIDTH{1'b0}};
         end
     end
     

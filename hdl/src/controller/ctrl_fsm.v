@@ -16,9 +16,6 @@ module FSM (
     output wire [2:0]  ostate       //! FSM state
 );
 
-    reg [2:0] cstate; //! Current state register
-    reg [2:0] nstate; //! Next state register
-
     localparam [2:0] S1 = 3'b000;  //! Memory allocation
     localparam [2:0] S2 = 3'b001;  //! Load sample from regfile to RAM and initialize MAC
     localparam [2:0] S3 = 3'b010;  //! Vector convolution on MAC
@@ -27,6 +24,13 @@ module FSM (
     localparam [2:0] S6 = 3'b101;  //! Load system output sample
     localparam [2:0] S7 = 3'b110;  //! Load new sapmle from audio bus
     localparam [2:0] S8 = 3'b111;  //! Allocation list counter increment
+
+    reg [2:0] cstate; //! Current state register
+    reg [2:0] nstate; //! Next state register
+
+    initial begin
+        {cstate, nstate} = 6'b000000;
+    end
 
     //! State switching logic
     always @(posedge clk) begin : state_switching

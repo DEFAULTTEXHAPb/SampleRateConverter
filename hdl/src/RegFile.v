@@ -1,20 +1,85 @@
 
+module regFile(
+    input  [31:0]  Ip1,
+    input  [3:0]   sel_i1,
+    output [31:0]  Op1,
+    input  [3:0]   sel_o1,
+    output [31:0]  Op2,
+    input  [3:0]   sel_o2,
+    input          RD, WR,
+    input          rst,
+    input          EN,
+    input          clk
+);      
+       
+    reg [31:0]  regFile [0:15];
+    integer i;
 
-/*
+    always @ (posedge clk) begin
+ if (EN == 1) begin
+  if (rst == 1) //If at reset 
 
- 1 2 3 4 5 6 ...
+   begin 
 
-    1 4
-    2 5 
-    3 6
+   for (i = 0; i < 16; i = i + 1) begin
 
-         / ---------------- -> a \                        / ---------------- -> a \
- || ---- - ---------------- -> b - a b c     ||      ---- - ---------------- -> b - a b c 
-         \ ---------------- -> c /                        \ ---------------- -> c /
+    regFile [i] = 32'h0; 
 
+   end 
 
-*/
+   Op1 = 32'hx; 
 
+   end 
+
+  else if (rst == 0) //If not at reset 
+
+   begin 
+
+   case ({RD,WR}) 
+
+    2'b00:  begin 
+
+     end 
+
+    2'b01:  begin //If Write only 
+
+     regFile [sel_i1] = Ip1; 
+
+     end 
+
+    2'b10:  begin //If Read only 
+
+     Op1 = regFile [sel_o1]; 
+
+     Op2 = regFile [sel_o2]; 
+
+     end 
+
+    2'b11:  begin //If both active 
+
+     Op1 = regFile[sel_o1]; 
+
+     Op2 = regFile [sel_o2]; 
+
+     regFile [sel_i1] = Ip1; 
+
+     end 
+
+    default: begin //If undefined 
+
+      end 
+
+   endcase 
+
+   end 
+
+  else; 
+
+ end
+ else;
+end 
+
+endmodule
 
 
 
