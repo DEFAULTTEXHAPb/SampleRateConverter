@@ -1,5 +1,7 @@
 {
     "python.pythonPath": "C:\\tools\\conda\\python.exe",
+    "vls.path": "vls",
+    "vls.trace.server": "verbose",
     "files.associations": {
         "algorithm": "c"
     },

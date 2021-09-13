@@ -6,7 +6,7 @@
 //! with 8 states. It allows to manage data flow of 
 //! upsampling process
 
-module FSM (
+module ctrl_fsm (
     input  wire        clk,         //! __*Clock*__
     input  wire        rst,         //! __*Reset*__
     input  wire        en,          //! __*Clock enable*__

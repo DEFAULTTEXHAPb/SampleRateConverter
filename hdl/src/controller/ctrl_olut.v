@@ -1,4 +1,4 @@
-module OutLut (
+module ctrl_olut (
     input [2:0] fsm_state,
     output reg pc_clr, pc_incr,
     output reg fetch,

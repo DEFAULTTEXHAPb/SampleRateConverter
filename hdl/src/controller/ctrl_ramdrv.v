@@ -2,7 +2,7 @@
 `include "controller/ctrl_ramdrv_header.v"
 `include "controller/ctrl_ramdrv_ringbuf.v"
 
-module RAMDriver #(
+module ctrl_ramdrv #(
     parameter DATA_ADDRESS_WIDTH = 12,
     parameter DATA_OFFSET_WIDTH = 5,
     parameter VECTOR_INDEX_WIDTH = 5
@@ -34,10 +34,10 @@ module RAMDriver #(
     assign data_addr = (cnt == 1'b1)? rb_data_addr : init_data_addr;
     assign conv_pass = pass;
 
-    DataRingBuffer#(
+    ctrl_ramdrv_ringbuf #(
         .DATA_ADDRESS_WIDTH ( DATA_ADDRESS_WIDTH ),
         .DATA_OFFSET_WIDTH  ( DATA_OFFSET_WIDTH )
-    )u_DataRingBuffer(
+    )u_ctrl_ramdrv_ringbuf(
         .clk                ( clk                ),
         .clr                ( rst                ),
         .cnt                ( cnt                ),
@@ -49,10 +49,10 @@ module RAMDriver #(
         .data_addr          ( rb_data_addr       )
     );
 
-    HeadRegs#(
+    ctrl_ramdrv_header #(
         .DATA_OFFSET_WIDTH ( DATA_OFFSET_WIDTH ),
         .VECTOR_INDEX_WIDTH ( VECTOR_INDEX_WIDTH )
-    )u_HeadRegs(
+    )u_ctrl_ramdrv_header(
         .clk               ( clk               ),
         .rst               ( rst               ),
         .init              ( h_init            ),
@@ -63,10 +63,10 @@ module RAMDriver #(
         .head_offset       ( head_offset       )
     );
 
-    CoefAddrCounter#(
+    ctrl_ramdrv_coefcnt#(
         .DATA_ADDRESS_WIDTH ( DATA_ADDRESS_WIDTH ),
         .DATA_OFFSET_WIDTH  ( DATA_OFFSET_WIDTH )
-    )u_CoefAddrCounter(
+    )u_ctrl_ramdrv_coefcnt(
         .clk                ( clk                ),
         .clr                ( rst                ),
         .load               ( a_init             ),

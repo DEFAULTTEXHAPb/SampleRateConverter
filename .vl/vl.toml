@@ -1,5 +1,5 @@
 [verilog]
-    include_paths = [
-        "hdl/include/",
-        "hdl/src/**"
-    ]
+include_paths = [
+    "hdl/include/",
+    "hdl/src/"
+]

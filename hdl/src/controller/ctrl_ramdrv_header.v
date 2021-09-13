@@ -1,4 +1,4 @@
-module HeadRegs #(
+module ctrl_ramdrv_header #(
     parameter DATA_OFFSET_WIDTH = 10,
     parameter VECTOR_INDEX_WIDTH = 4
 ) (

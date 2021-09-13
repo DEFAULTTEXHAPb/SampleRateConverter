@@ -1,4 +1,4 @@
-module ProgCnt #(
+module ctrl_pc #(
     parameter INSTRADDRW = 8
 ) (
     input clk, clr, pc_incr,

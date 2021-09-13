@@ -6,7 +6,7 @@
 //! with 8 states. It allows to manage data flow of 
 //! upsampling process
 
-module InstrFetch #(
+module ctrl_ifetch #(
     parameter VIDWIDTH = 5,       //! Vector ID instruction field width
     parameter RFAWIDTH = 5, //! Register address instruction field width
     parameter DAWIDTH  = 12     //! Data RAM address instruction field width

@@ -1,4 +1,4 @@
-module RegFileDriver #(
+module ctrl_regfdrv #(
     parameter WIDTH = 3
 ) (
     input wire             clk, rst, en,

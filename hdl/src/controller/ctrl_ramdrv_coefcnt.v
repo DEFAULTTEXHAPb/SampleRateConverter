@@ -1,5 +1,5 @@
 //TODO: добавить порт - флаг окончания счета в кольцевом буффере
-module CoefAddrCounter #(
+module ctrl_ramdrv_coefcnt #(
     parameter DATA_ADDRESS_WIDTH = 12
 ) (
     input  wire                          clk,

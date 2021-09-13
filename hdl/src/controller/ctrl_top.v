@@ -5,7 +5,7 @@
 `include "controller/ctrl_ramdrv.v"
 `include "controller/ctrl_regfdrv.v"
 
-module top #(
+module ctrl_top #(
     parameter VEC_ID_WIDTH = 3,
     parameter REGFILE_ADDR_WIDTH = 3,
     parameter ALLOC_LENGTH_WIDTH = 4,
@@ -29,7 +29,7 @@ module top #(
     wire vector_pass, last_stage, last_vector;
     wire [2:0] ostate;
 
-    FSM u_FSM(
+    ctrl_fsm u_ctrl_fsm(
         .clk         ( clk         ),
         .rst         ( rst         ),
         .en          ( en_devs     ),
@@ -42,9 +42,9 @@ module top #(
     wire pc_clr, pc_incr;
     wire clr = rst | pc_clr;
 
-    ProgCnt#(
+    ctrl_pc#(
         .INSTRADDRW ( INSTR_ADDR_WIDTH )
-     )u_ProgCnt(
+     )u_ctrl_pc(
         .clk     ( clk     ),
         .clr     ( clr     ),
         .pc_incr ( pc_incr ),
@@ -54,7 +54,7 @@ module top #(
     wire h_init, a_init, cnt,
          res_err, rf_rw, get_reg, new_in, new_out;
 
-    OutLut u_OutLut(
+    ctrl_olut u_ctrl_olut(
         .fsm_state ( ostate    ),
         .pc_clr    ( pc_clr    ),
         .pc_incr   ( pc_incr   ),
@@ -75,11 +75,11 @@ module top #(
     wire [DATA_ADDR_WIDTH-1:0] data_uptr, data_lptr, coef_ptr;
     wire                        lstg_f, upse_f;
 
-    InstrFetch#(
+    ctrl_ifetch#(
         .VIDWIDTH   ( VEC_ID_WIDTH ),
         .RFAWIDTH   ( REGFILE_ADDR_WIDTH ),
         .DAWIDTH    ( DATA_ADDR_WIDTH )
-    )u_InstrFetch(
+    )u_ctrl_ifetch(
         .clk        ( clk        ),
         .rst        ( rst        ),
         .fetch      ( fetch      ),
@@ -96,11 +96,11 @@ module top #(
 
 
 
-    RAMDriver#(
+    ctrl_ramdrv#(
         .DATA_ADDRESS_WIDTH ( DATA_ADDR_WIDTH ),
         .DATA_OFFSET_WIDTH  ( ALLOC_LENGTH_WIDTH ),
         .VECTOR_INDEX_WIDTH ( VEC_ID_WIDTH )
-    )u_RAMDriver(
+    )u_ctrl_ramdrv(
         .clk                ( clk                ),
         .rst                ( rst                ),
         .h_init             ( h_init             ),
@@ -117,9 +117,9 @@ module top #(
 
 
 
-    RegFileDriver#(
+    ctrl_regfdrv#(
         .WIDTH      ( REGFILE_ADDR_WIDTH)
-     )u_RegFileDriver(
+     )u_ctrl_regfdrv(
         .clk        ( clk        ),
         .rst        ( rst        ),
         .en         ( en_devs    ),

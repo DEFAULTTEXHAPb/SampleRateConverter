@@ -1,6 +1,6 @@
 //TODO: добавить промежуточные регистры для избежания ассерта в хедаре
 
-module DataRingBuffer #(
+module ctrl_ramdrv_ringbuf #(
     parameter DATA_ADDRESS_WIDTH = 12,
     parameter DATA_OFFSET_WIDTH = 10
 )(
