@@ -8,7 +8,7 @@ module tb_Upsampler();
     logic             en_ram_pa;
     logic             en_ram_pb;
     logic             en_mac;
-    logic             rw_regf;
+    logic             rw_logicf;
     logic             rw_ramp1;
     logic             rw_ramp2;
     logic             r_alocinstr;
@@ -19,14 +19,14 @@ module tb_Upsampler();
     logic             new_out;
     CtrlUnit::TAddrBus    addr_bus_1;
     CtrlUnit::TAddrBus    addr_bus_2;
-    CtrlUnit::TState      ostate;
+    CtrlUnit::fsmState_e      ostate;
 
     logic [CtrlUnit::PS_ADDR_W-1:0] pc;
-    CtrlUnit::TState      past_state;
+    CtrlUnit::fsmState_e      past_state;
 
     ControllerUnit dut (.*);
 
-    reg [3:0] test_timer = '0;
+    logic [3:0] test_timer = '0;
 
     CtrlUnit::TAllocInstr prog [0:15];
     initial $readmemb("./simulation/prog.txt", prog);
@@ -65,15 +65,15 @@ module tb_Upsampler();
         // end
     end : main_test_start
 
-    logic fetch_f = ~(en_ram_pa && en_ram_pb && en_mac && rw_regf && rw_ramp1 && rw_ramp2 && ~r_alocinstr && mac_init && load && res_err && new_in && new_out);
-    logic load_f = ~(~en_ram_pa && en_ram_pb && ~en_mac && ~rw_regf && rw_ramp1 && rw_ramp2 && r_alocinstr && ~mac_init && load && res_err && new_in && new_out);
-    logic calc_f = ~(~en_ram_pa && ~en_ram_pb && ~en_mac && rw_regf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && load && res_err && new_in && new_out);
-    logic res_f = ~(en_ram_pa && en_ram_pb && ~en_mac && rw_regf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && ~load && ~res_err && new_in && new_out);
-    logic err_f = ~(en_ram_pa && en_ram_pb && ~en_mac && rw_regf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && ~load && res_err && new_in && new_out);
-    logic out_f = ~(en_ram_pa && en_ram_pb && en_mac && ~rw_regf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && load && res_err && new_in && ~new_out);
-    logic new_f = ~(en_ram_pa && en_ram_pb && en_mac && rw_regf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && load && res_err && ~new_in && new_out);
-    logic incr_f = ~(en_ram_pa && en_ram_pb && en_mac && rw_regf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && load && res_err && new_in && new_out);
-    wire [7:0] check_word = {fetch_f, load_f, calc_f, res_f, err_f, out_f, new_f, incr_f};
+    logic fetch_f = ~(en_ram_pa && en_ram_pb && en_mac && rw_logicf && rw_ramp1 && rw_ramp2 && ~r_alocinstr && mac_init && load && res_err && new_in && new_out);
+    logic load_f = ~(~en_ram_pa && en_ram_pb && ~en_mac && ~rw_logicf && rw_ramp1 && rw_ramp2 && r_alocinstr && ~mac_init && load && res_err && new_in && new_out);
+    logic calc_f = ~(~en_ram_pa && ~en_ram_pb && ~en_mac && rw_logicf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && load && res_err && new_in && new_out);
+    logic res_f = ~(en_ram_pa && en_ram_pb && ~en_mac && rw_logicf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && ~load && ~res_err && new_in && new_out);
+    logic err_f = ~(en_ram_pa && en_ram_pb && ~en_mac && rw_logicf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && ~load && res_err && new_in && new_out);
+    logic out_f = ~(en_ram_pa && en_ram_pb && en_mac && ~rw_logicf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && load && res_err && new_in && ~new_out);
+    logic new_f = ~(en_ram_pa && en_ram_pb && en_mac && rw_logicf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && load && res_err && ~new_in && new_out);
+    logic incr_f = ~(en_ram_pa && en_ram_pb && en_mac && rw_logicf && rw_ramp1 && rw_ramp2 && r_alocinstr && mac_init && load && res_err && new_in && new_out);
+    logic [7:0] check_word = {fetch_f, load_f, calc_f, res_f, err_f, out_f, new_f, incr_f};
 
     
     

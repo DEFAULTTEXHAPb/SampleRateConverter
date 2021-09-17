@@ -1,0 +1,6 @@
+[verilog]
+include_paths = ["hdl/src/","hdl/include/","simulation/"]
+defines = ["DEBUG"]
+
+[option]
+linter = true

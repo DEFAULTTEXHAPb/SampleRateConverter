@@ -5,29 +5,29 @@ module tb_Controller;
 
     //GET DEFINE PARAMETERS
     localparam VEC_ID_W       = 3;
-    localparam REGFILE_ADDR_W = 4;
+    localparam logicFILE_ADDR_W = 4;
     localparam ALLOC_LEN_W    = 5;
     localparam DATA_ADDR_W    = 6;
     localparam PROG_SIZE      = 32;
     //#####################
-    localparam ALLOC_INSTR_W = 1+1+VEC_ID_W+2*REGFILE_ADDR_W+3*DATA_ADDR_W;
+    localparam ALLOC_INSTR_W = 1+1+VEC_ID_W+2*logicFILE_ADDR_W+3*DATA_ADDR_W;
 
     // runtime vars
     integer tiks = 0;
 
     //INPUT STIMULS
-    reg clk, rst, en, prog;
-    reg [ALLOC_INSTR_W-1:0] instr_word;
+    logic clk, rst, en, prog;
+    logic [ALLOC_INSTR_W-1:0] instr_word;
 
     //OUTPUT REACTION
-    wire fetch, en_ram_pa, en_ram_pb, wr_ram_pa, wr_ram_pb, rw;
-    wire [$clog2(PROG_SIZE)-1:0] pc;
-    wire [DATA_ADDR_W-1:0] data_addr, coef_addr;
-    wire [REGFILE_ADDR_W-1:0] ar1, ar2, ard;
+    logic fetch, en_ram_pa, en_ram_pb, wr_ram_pa, wr_ram_pb, rw;
+    logic [$clog2(PROG_SIZE)-1:0] pc;
+    logic [DATA_ADDR_W-1:0] data_addr, coef_addr;
+    logic [logicFILE_ADDR_W-1:0] ar1, ar2, ard;
 
     top#(
         .VEC_ID_WIDTH       ( VEC_ID_W ),
-        .REGFILE_ADDR_WIDTH ( REGFILE_ADDR_W ),
+        .logicFILE_ADDR_WIDTH ( logicFILE_ADDR_W ),
         .ALLOC_LENGTH_WIDTH ( ALLOC_LEN_W ),
         .DATA_ADDR_WIDTH    ( DATA_ADDR_W ),
         .INSTR_ADDR_WIDTH   ( $clog2(PROG_SIZE) )
@@ -55,19 +55,19 @@ module tb_Controller;
 
     //INDEPTH DUT SIGNALS
     //instruction struct
-        wire                       lstg_f     = u_top.u_InstrFetch.lstg_f;
-        wire                       upse_f     = u_top.u_InstrFetch.upse_f;
-        wire [VEC_ID_W-1:0]       vector_id  = u_top.u_InstrFetch.vector_id;
-        wire [REGFILE_ADDR_W-1:0] result_reg = u_top.u_InstrFetch.result_reg;
-        wire [REGFILE_ADDR_W-1:0] error_reg  = u_top.u_InstrFetch.error_reg;
-        wire [ALLOC_LEN_W-1:0]    vector_len = u_top.u_InstrFetch.data_uptr;
-        wire [DATA_ADDR_W-1:0]    data_ptr   = u_top.u_InstrFetch.data_lptr;
-        wire [DATA_ADDR_W-1:0]    coef_ptr   = u_top.u_InstrFetch.coef_ptr;
+        logic                       lstg_f     = u_top.u_InstrFetch.lstg_f;
+        logic                       upse_f     = u_top.u_InstrFetch.upse_f;
+        logic [VEC_ID_W-1:0]       vector_id  = u_top.u_InstrFetch.vector_id;
+        logic [logicFILE_ADDR_W-1:0] result_logic = u_top.u_InstrFetch.result_logic;
+        logic [logicFILE_ADDR_W-1:0] error_logic  = u_top.u_InstrFetch.error_logic;
+        logic [ALLOC_LEN_W-1:0]    vector_len = u_top.u_InstrFetch.data_uptr;
+        logic [DATA_ADDR_W-1:0]    data_ptr   = u_top.u_InstrFetch.data_lptr;
+        logic [DATA_ADDR_W-1:0]    coef_ptr   = u_top.u_InstrFetch.coef_ptr;
     //fsm state
-        wire [2:0] dut_state = u_top.u_FSM.ostate;
+        logic [2:0] dut_state = u_top.u_FSM.ostate;
 
     // define programm memory
-    reg [ALLOC_INSTR_W-1:0] rom [0:PROG_SIZE-1];
+    logic [ALLOC_INSTR_W-1:0] rom [0:PROG_SIZE-1];
 
     // programm memory initialization
     initial begin
@@ -75,7 +75,7 @@ module tb_Controller;
     end
 
     // programm pass flag
-    reg pass;
+    logic pass;
 
     //clock start
     localparam CLK_PERIOD = 10;

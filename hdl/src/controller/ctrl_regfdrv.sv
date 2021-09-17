@@ -1,10 +1,10 @@
 module ctrl_regfdrv #(
     parameter WIDTH = 3
 ) (
-    input wire             clk, rst, en,
-    input wire             res_err, rf_rw, get_reg,
-    input wire [WIDTH-1:0] result_reg, error_reg,
-    output reg [WIDTH-1:0] ar1, ar2, ard
+    input logic             clk, rst, en,
+    input logic             res_err, rf_rw, get_logic,
+    input logic [WIDTH-1:0] result_logic, error_logic,
+    output logic [WIDTH-1:0] ar1, ar2, ard
 );
 
     localparam ULOAD_SAMPLE = 4'b1000;
@@ -17,19 +17,19 @@ module ctrl_regfdrv #(
             if (en) begin
                 casez ({rf_rw, res_err})
                     2'b1z: begin
-                        ar1 <= (get_reg)? result_reg : result_reg - 1'b1;
-                        ar2 <= (get_reg)? {WIDTH{1'bz}} : error_reg;
+                        ar1 <= (get_logic)? result_logic : result_logic - 1'b1;
+                        ar2 <= (get_logic)? {WIDTH{1'bz}} : error_logic;
                         ard <= {WIDTH{1'bz}};
                     end
                     2'b01: begin
                         ar1 <= {WIDTH{1'bz}};
                         ar2 <= {WIDTH{1'bz}};
-                        ard <= result_reg;
+                        ard <= result_logic;
                     end
                     2'b00: begin
                         ar1 <= {WIDTH{1'bz}};
                         ar2 <= {WIDTH{1'bz}};
-                        ard <= error_reg;
+                        ard <= error_logic;
                     end
                 endcase
             end

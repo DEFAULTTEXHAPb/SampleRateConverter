@@ -1,12 +1,15 @@
 {
     "python.pythonPath": "C:\\tools\\conda\\python.exe",
-    "vls.path": "vls",
-    "vls.trace.server": "verbose",
-    "files.associations": {
-        "algorithm": "c"
-    },
-    "verilog.linting.linter": "verilator",
-    "verilog.linting.verilator.arguments": "--lint-only -Wall -DDEBUG -DSIMPLE_REPORT -Ihdl/include/ -Isimulation/ -Ihdl/src/ --language 1364-2001",
-    "verilog.linting.iverilog.arguments": "-g2001 -I hdl/include/ -I simulation/ -I hdl/src/",
-    "verilog.languageServer": "none"
+    "systemverilog.launchConfiguration": "verilator --sv --lint-only -DDEBUG -Ihdl/src/ -Ihdl/include/ -Isimulation/ --language 1800-2012 --Wall",
+    "systemverilog.compileOnSave": true,
+    "systemverilog.includeIndexing": [
+        "**/*.{sv,v,svh,vh}"
+    ],
+    "systemverilog.formatCommand": "verible-verilog-format",
+    "systemverilog.parallelProcessing": 20,
+    "systemverilog.trace.server": "verbose",
+    "systemverilog.forceFastIndexing": true,
+    "systemverilog.enableIncrementalIndexing": true,
+    "systemverilog.documentSymbolsPrecision": "full",
+    "editor.tabSize": 2
 }
