@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\tools\\conda\\python.exe",
+    "editor.tabSize": 2,
     "vls.path": "vls",
     "vls.trace.server": "verbose",
     "files.associations": {
