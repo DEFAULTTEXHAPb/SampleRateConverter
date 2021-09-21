@@ -1,8 +1,0 @@
-[libraries]
-libieee93.files = [
-    'C:\\tools\\msys2\\mingw64\\lib\\ghdl\\src\\ieee\\v93\\*.vhdl'
-]
-work.files = [
-    'hdl\src\*.vhd',
-    'hdl\include\*.vhd'
-]

@@ -1,12 +1,12 @@
 {
     "editor.tabSize": 2,
-    "vls.path": "vls",
-    "vls.trace.server": "verbose",
     "files.associations": {
         "algorithm": "c"
     },
-    "verilog.linting.linter": "verilator",
-    "verilog.linting.verilator.arguments": "--lint-only -Wall -DDEBUG -DSIMPLE_REPORT -Ihdl/include/ -Isimulation/ -Ihdl/src/ --language 1364-2001",
-    "verilog.linting.iverilog.arguments": "-g2001 -I hdl/include/ -I simulation/ -I hdl/src/",
-    "verilog.languageServer": "none"
+    "teroshdl.formatter.verilog.type.a": "iStyle",
+    "teroshdl.linter.verilog.linter.a": "Verilator",
+    "teroshdl.linter.verilog.linter.verilator.xcall.enable": true,
+    "teroshdl.linter.verilog.linter.verilator.arguments": "--lint-only -Wall -Wno-lint -Ihdl/src -Ihdl/include -Itestbench/ --language 1364-2005",
+    
+
 }
