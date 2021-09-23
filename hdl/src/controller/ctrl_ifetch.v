@@ -33,10 +33,10 @@ module ctrl_ifetch #(
 
     //! Instruction fetch process
     always @(posedge clk) begin : fetch_process
-        if (!rst) begin
-            if (fetch) {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= instr_word;
+        if (rst == 1'b1) begin
+            if (fetch) {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= {INSTRWIDTH{1'b0}};
         end else begin
-            {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= {INSTRWIDTH{1'b0}};
+            {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= instr_word;
         end
     end
     

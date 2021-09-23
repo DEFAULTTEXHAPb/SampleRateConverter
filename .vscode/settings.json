@@ -6,7 +6,9 @@
     "teroshdl.formatter.verilog.type.a": "iStyle",
     "teroshdl.linter.verilog.linter.a": "Verilator",
     "teroshdl.linter.verilog.linter.verilator.xcall.enable": true,
-    "teroshdl.linter.verilog.linter.verilator.arguments": "--lint-only -Wall -Wno-lint -Ihdl/src -Ihdl/include -Itestbench/ --language 1364-2005",
+    "teroshdl.linter.verilog.linter.verilator.arguments": "--lint-only -Wall -Ihdl/src -Ihdl/include -Itestbench/ --language 1364-2005",
+    "editor.wordWrap": "off",
+    "editor.bracketPairColorization.enabled": false
     
 
 }
