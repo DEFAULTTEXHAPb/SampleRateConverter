@@ -1,0 +1,71 @@
+toplevel: tb_Controller
+name: Upsampler
+files: 
+  - name: "../hdl/include/glb_macros.vh"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_fsm.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_ifetch.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_olut.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_pc.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_ramdrv.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_ramdrv_coefcnt.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_ramdrv_header.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_ramdrv_ringbuf.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_regfdrv.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../hdl/src/controller/ctrl_top.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "../testbench/tb_Controller.v"
+    file_type: "verilogSource-2005"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+tool_options: 
+  icarus: 
+    installation_path: ""
+    timescale: ""
+    iverilog_options: 
+      - ""
+    linter_options: 
+      - ""

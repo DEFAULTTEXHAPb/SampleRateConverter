@@ -1,52 +1,53 @@
+
 module ctrl_regfdrv #(
     parameter WIDTH = 3
   ) (
-    input  wire             clk,
-    input  wire             rst,
-    input  wire             mac_init,
-    input  wire             w_r,
-    input  wire             new_smp,
-    input  wire             res_err,
-    input  wire [WIDTH-1:0] result_reg,
-    input  wire [WIDTH-1:0] error_reg,
-    output reg  [WIDTH-1:0] ard,
-    output reg  [WIDTH-1:0] ar1,
-    output reg  [WIDTH-1:0] ar2
+    input  wire             clk,        //! __Clock__
+    input  wire             rst,        //! __Reset__
+    input  wire             en_init,    //! Ring buffer initialization flag
+    input  wire             en_load,    //! Register file load enable
+    input  wire             new_smp,    //! New input sample flag
+    input  wire             out_smp,    //! New output sample flag
+    //input  wire             load,       //! Coefficient load flag
+    input  wire [WIDTH-1:0] result_reg, //! Result register address
+    input  wire [WIDTH-1:0] error_reg,  //! Erorr register address
+    output reg  [WIDTH-1:0] ares,       //! Result register file address
+    output reg  [WIDTH-1:0] aerr       //! Erorr register file address
   );
 
-  localparam ULOAD_SAMPLE = 4'b1000;
-  localparam CALC_INIT    = 4'b0101;
-  localparam LOAD_ERROR   = 4'b0010;
-  localparam LOAD_RESULT  = 4'b0001;
+  initial begin
+    aerr = {WIDTH{1'b0}};
+    ares = {WIDTH{1'b0}};
+  end
 
-  wire write_reg = w_r;
-  wire read_reg = ~w_r;
+  // //! Destination erorr register file address value set
+  // always @(negedge clk) begin : ard2_reg
+  //   if (rst == 1'b0) begin
+  //     aerr <= {WIDTH{1'b0}};
+  //   end else if (en_load == 1'b1) begin
+  //     aerr <= error_reg;
+  //   end
+  // end
 
-  always @(posedge clk) begin : dest_reg_addr
+  //! Result register file address value set
+  always @(negedge clk) begin : ares_reg_set
     if (rst == 1'b1) begin
-      ard <= {WIDTH{1'b0}};
-    end if (write_reg == 1'b1) begin
-      if (new_smp == 1'b0) begin
-        ard <= (res_err == 1'b1)? result_reg : error_reg;
-      end else begin
-        ard <= {WIDTH{1'b0}};
-      end
+      ares <= {WIDTH{1'b0}};
+    end begin
+      case ({en_init,en_load})
+        2'b10: ares <= (new_smp == 1'b0)? result_reg - 1'b1 : {WIDTH{1'b0}};
+        2'b01: ares <= (out_smp == 1'b0)? result_reg : {WIDTH{1'b0}};
+        default: /* __ clock disable __ */;
+      endcase      
     end
   end
 
-  always @(posedge clk) begin : op1_reg_addr
+  //! Source erorr register file address value set
+  always @(negedge clk) begin : aerr_reg_set
     if (rst == 1'b1) begin
-      ar1 <= {WIDTH{1'b0}};
-    end if (mac_init == 1'b1) begin
-      ar1 <= result_reg - 1'b1;
-    end
-  end
-
-  always @(posedge clk) begin : op2_reg_addr
-    if (rst == 1'b1) begin
-      ar1 <= {WIDTH{1'b0}};
-    end if (mac_init == 1'b1) begin
-      ar2 <= error_reg;
+      aerr <= {WIDTH{1'b0}};
+    end if ((en_init == 1'b1)||(en_load == 1'b1)) begin
+      aerr <= error_reg;
     end
   end
 

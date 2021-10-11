@@ -7,36 +7,40 @@
 //! upsampling process
 
 module ctrl_ifetch #(
-    parameter VIDWIDTH = 5,       //! Vector ID instruction field width
     parameter RFAWIDTH = 5, //! Register address instruction field width
     parameter DAWIDTH  = 12     //! Data RAM address instruction field width
 )(
-    input                       clk,        //! __*Clock*__
-    input                       rst,        //! __*Reset*__
-    input                       fetch,      //! Instruction fetch flag
-    input      [INSTRWIDTH-1:0] instr_word, //! Word from instruction memory
-    output reg                  lstg_f,     //! *`Instruction word:`* Last upsampler stage flag
-    output reg                  upse_f,     //! *`Instruction word:`* Last upsampler vector flag
-    output reg [VIDWIDTH-1:0]   vector_id,  //! *`Instruction word:`* Vector ID
-    output reg [RFAWIDTH-1:0]   result_reg, //! *`Instruction word:`* Result register address
-    output reg [RFAWIDTH-1:0]   error_reg,  //! *`Instruction word:`* Error register address
-    output reg [DAWIDTH-1:0]    data_uptr,  //! *`Instruction word:`* Upper data ring buffer segment pointer
-    output reg [DAWIDTH-1:0]    data_lptr,  //! *`Instruction word:`* Lower data ring buffer segment pointer
-    output reg [DAWIDTH-1:0]    coef_ptr    //! *`Instruction word:`* Coefficient massive pointer
+    input  wire                  clk,        //! __*Clock*__
+    input  wire                  rst,        //! __*Reset*__
+    input  wire                  en_fetch,   //! Instruction fetch flag
+    input  wire                  iw_valid,   //! Pointer struct content valid
+    input       [INSTRWIDTH-1:0] instr_word, //! Word from instruction memory
+    output reg                   lstg_f,     //! *`Instruction word:`* Last upsampler stage flag
+    output reg                   startups_f, //! *`Instruction word:`* First upsampler vector flag
+    output reg  [RFAWIDTH-1:0]   result_reg, //! *`Instruction word:`* Result register address
+    output reg  [RFAWIDTH-1:0]   error_reg,  //! *`Instruction word:`* Error register address
+    output reg  [DAWIDTH-1:0]    data_bptr,  //! *`Instruction word:`* Base data ring buffer segment pointer
+    output reg  [DAWIDTH-1:0]    data_lptr,  //! *`Instruction word:`* Lower data ring buffer segment pointer
+    output reg  [DAWIDTH-1:0]    data_hptr,  //! *`Instruction word:`* Head data ring buffer segment pointer
+    output reg  [DAWIDTH-1:0]    filt_coef_ptr    //! *`Instruction word:`* Coefficient massive pointer
 );
     //! Allocation instruction width
-    localparam INSTRWIDTH = 1 + 1 + VIDWIDTH + 2*RFAWIDTH + 3*DAWIDTH;
+    localparam INSTRWIDTH = 1 + 1 + 2*RFAWIDTH + 4*DAWIDTH;
+    
+    //! Prefetch handshake
+    wire assert_fetch = ((iw_valid == 1'b1)&(en_fetch == 1'b1)) == 1'b1;
 
     initial begin
-        {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} = {INSTRWIDTH{1'b0}};
+        {lstg_f, startups_f, result_reg, error_reg, data_bptr, data_lptr, data_hptr, filt_coef_ptr} = {INSTRWIDTH{1'b0}};
     end
 
     //! Instruction fetch process
-    always @(posedge clk) begin : fetch_process
+    always @(negedge clk) begin : fetch_process
         if (rst == 1'b1) begin
-            if (fetch) {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= {INSTRWIDTH{1'b0}};
+              {lstg_f, startups_f, result_reg, error_reg, data_bptr, data_lptr, data_hptr, filt_coef_ptr} <= {INSTRWIDTH{1'b0}};
         end else begin
-            {lstg_f, upse_f, vector_id, result_reg, error_reg, data_uptr, data_lptr, coef_ptr} <= instr_word;
+            if (assert_fetch == 1'b1)
+              {lstg_f, startups_f, result_reg, error_reg, data_bptr, data_lptr, data_hptr, filt_coef_ptr} <= instr_word;
         end
     end
     

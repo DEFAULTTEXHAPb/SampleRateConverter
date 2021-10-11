@@ -30,4 +30,8 @@ simulation: ctrl.out
 	$(SIM) ctrl.out
 
 lint: testbench/$(TOPMODULE).v
-	$(LINT) $(VVARG) testbench/$(TOPMODULE).v
+# $(LINT) $(VVARG) testbench/$(TOPMODULE).v
+	$(CC) -t null -Wall $(IVARG) testbench/$(TOPMODULE).v
+
+gwave: simulation/$(TOPMODULE).vcd
+	gtkwave simulation/trace_result.gtkw

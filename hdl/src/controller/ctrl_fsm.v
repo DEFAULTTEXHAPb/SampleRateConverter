@@ -1,90 +1,145 @@
+//! State Table
+//! |Output Signals    |PTR_REQ| CINIT |  CALC | LOAD  |
+//! |:----------------:|:-----:|:-----:|:-----:|:-----:|
+//! |`en_fetch        `|_**1**_|   0   |   0   |   0   |
+//! |`ptrs_req        `|_**1**_|   0   |   0   |   0   |
+//! |`ringbuf_addr_clr`|_**1**_|   0   |   0   |   0   |
+//! |`en_init         `|   0   |_**1**_|   0   |   0   |
+//! |`mac_init        `|   0   |_**1**_|   0   |   0   |
+//! |`ringbuf_init    `|   0   |_**1**_|   0   |   0   |
+//! |`regf_rd         `|   0   |_**1**_|   0   |   0   |
+//! |`regf_en         `|   0   |_**1**_|   0   |_**1**_|
+//! |`ena             `|   0   |_**1**_|_**1**_|   0   |
+//! |`wea             `|   0   |_**1**_|   0   |   0   |
+//! |`enb             `| prog  |_**1**_| prog  | prog  |
+//! |`en_calc         `|   0   |   0   |_**1**_|   0   |
+//! |`count           `|   0   |   0   |_**1**_|   0   |
+//! |`en_load         `|   0   |   0   |   0   |_**1**_|
+//! |`regf_wr         `|   0   |   0   |   0   |_**1**_|
+//! |`web             `| prog  | prog  | prog  | prog  |
+
+
 //! @title Controller FSM
-//! @file ctrl_fsm.v
-//! @author Ivan @DEFAULTTEXHAPb
-//! @date 01-09-2021
 //! @brief This is Finite State Machine for Controller
-//! with 8 states. It allows to manage data flow of 
+//! with 4 states. It allows to manage data flow of 
 //! upsampling process
 
 module ctrl_fsm (
-    input  wire        clk,         //! __*Clock*__
-    input  wire        rst,         //! __*Reset*__
-    input  wire        en,          //! __*Clock enable*__
-    input  wire        vector_pass, //! Vector convolution pass flag
-    input  wire        last_stage,  //! Last upsampler stage flag
-    input  wire        last_vector, //! Last upsampler vector flag
-    output wire [2:0]  ostate       //! FSM state
+    input  wire       clk,             //! __Clock__
+    input  wire       rst,             //! __Reset__
+    input  wire       en,              //! __Clock enable__
+    input  wire       req_complete,    //! Pointer Struct request complete flag
+    input  wire       iw_valid,        //! Pointer Struct content valid
+    input  wire       count_passed,    //! Convolution Counting passed flag
+    input  wire       prog,            //! Coefficient Load flag
+    //input  wire       new_out,         //! Sample out flag
+    //input  wire       new_in,          //! Sample in flag
+
+    // Pointer struct request active-high signals
+    output reg       en_fetch,         //! main enable flag for Pointer struct request
+    output reg       ptrs_req,         //! next pointer struct request signal
+    output reg       ringbuf_addr_clr, //! Ring buffer address register clear
+
+    // MAC and RAM precalculation initialization active-high signals
+    output reg       en_init,          //! main enable flag for calculation initialization
+    output reg       mac_init,         //! MAC accumulator initialization
+    output reg       ringbuf_init,     //! Ring buffer initialization
+    output reg       regf_rd,          //! Register file read enable signal
+    output reg       regf_en,          //! Clock Enable of register file (also active-high in load state)
+    output reg       ena,              //! Data RAM clock enable for sample port (also active-high in calc state)
+    output reg       wea,              //! Data RAM write enable for sample port
+    output reg       enb,              //! Data RAM clock enable for coefficient port (also active-high in prog state)
+
+    // Calculation active-high signals
+    output reg       en_calc,          //! main enable flag for convolution calculation
+    output reg       count,            //! Count process flag
+
+    // Load Result active-high signals
+    output reg       en_load,          //! main enable flag for result loading
+    output reg       regf_wr,          //! Write Enable of register file
+
+    // Coefficient loading active-high signals
+    output reg       web               //! Data RAM write enable for coefficient port
+
 );
 
-    localparam [2:0] S1 = 3'b000;  //! Memory allocation
-    localparam [2:0] S2 = 3'b001;  //! Load sample from regfile to RAM and initialize MAC
-    localparam [2:0] S3 = 3'b010;  //! Vector convolution on MAC
-    localparam [2:0] S4 = 3'b011;  //! Load result from MAC to register file
-    localparam [2:0] S5 = 3'b100;  //! Load error from MAC to register file
-    localparam [2:0] S6 = 3'b101;  //! Load system output sample
-    localparam [2:0] S7 = 3'b110;  //! Load new sapmle from audio bus
-    localparam [2:0] S8 = 3'b111;  //! Allocation list counter increment
+  localparam [1:0] PTR_REQ   = 2'b00; //! Pointer Struct Request
+  localparam [1:0] CALC_INIT = 2'b01; //! Convolution Calculation Initialization
+  localparam [1:0] CALC      = 2'b11; //! Convolution Calculation
+  localparam [1:0] LOAD      = 2'b10; //! Load Result
 
-    reg [2:0] cstate; //! Current state register
-    reg [2:0] nstate; //! Next state register
+  reg [1:0] cstate = 2'b00;  //! Current state register
+  reg [1:0] nstate = 2'b00;  //! Next state register
 
-    initial begin
-        {cstate, nstate} = 6'b000000;
+`ifndef ONE_HOT
+
+  //! Next state logic
+  always @(posedge clk) begin : state_switching
+    if (!rst) begin
+      cstate <= ((en == 1'b1)||(prog == 1'b0)) ? nstate : cstate;
+    end else begin
+      cstate <= PTR_REQ;
     end
+  end
 
-    //! State switching logic
-    always @(posedge clk) begin : state_switching
-        if (!rst) begin
-            if (en) begin
-                cstate <= nstate;
-            end
+  //! Switch path
+  always @(*) begin : next_state_switching_predition
+    case (cstate)
+      PTR_REQ:   nstate = ((req_complete == 1'b1)&&(iw_valid == 1'b1)) ? CALC_INIT : PTR_REQ;
+      CALC_INIT: nstate = CALC;
+      CALC:      nstate = (count_passed == 1'b1) ? LOAD : CALC;
+      LOAD:      nstate = PTR_REQ;
+    endcase
+  end
+
+`else
+
+  always @(posedge clk) begin : state_machine
+    case (cstate)
+      PTR_REQ: begin
+        if ((req_complete == 1'b1)&&(iw_valid == 1'b1)) begin
+          cstate <= CALC_INIT;
         end else begin
-            cstate <= S1;
+          cstate <= PTR_REQ;
         end
-    end
-    
-    //! Next state logic
-    always @(posedge clk) begin : next_state_switching_predition
-        case (nstate)
-            S1:
-                nstate = S2;
-            S2:
-                nstate = S3;
-            S3:
-                nstate = (!vector_pass)? S3 : S4;
-            S4:
-                nstate = S5;
-            S5:
-                nstate = (!last_stage)? S8 : S6;
-            S6:
-                nstate = (!last_vector)? S8 : S7;
-            S7:
-                nstate = S8;
-            S8:
-                nstate = S1;
-        endcase
-    end
+      end
+      CALC_INIT: cstate <= CALC;
+      CALC: begin
+        if (count_passed == 1'b1) begin
+          cstate <= LOAD;
+        end else begin
+          cstate <= CALC;
+        end
+      end
+      LOAD:      cstate <= PTR_REQ;
+    endcase
+  end
 
-    assign ostate = cstate;
-
-`ifdef DEBUG
-    reg [8*50-1:0] ostate_ascii; //! `debug:` ASCII state decoding var
-    //! `debug:` ASCII state decoding
-    always @(ostate) begin : state_ascii
-        case (ostate)
-            S1 : ostate_ascii = "ALLOC";
-            S2 : ostate_ascii = "LOAD_AND_INIT";
-            S3 : ostate_ascii = "CONVOLUTION";
-            S4 : ostate_ascii = "LOAD_RESULT";
-            S5 : ostate_ascii = "LOAD_ERROR";
-            S6 : ostate_ascii = "LOAD_OUTPUT";
-            S7 : ostate_ascii = "LOAD_INPUT";
-            S8 : ostate_ascii = "PC_INCREMENT";
-            default: begin
-                ostate_ascii = "XSTATE";
-            end
-        endcase
-    end
 `endif
-    
+
+  //! Output Moore FSM logic
+  always @(*) begin : moore_output_logic
+    en_fetch         = (cstate == PTR_REQ);
+    ptrs_req         = (cstate == PTR_REQ);
+    ringbuf_addr_clr = (cstate == PTR_REQ);
+    en_init          = (cstate == CALC_INIT);
+    mac_init         = (cstate == CALC_INIT);
+    ringbuf_init     = (cstate == CALC_INIT);
+    ena              = (((cstate == CALC_INIT) || (cstate == CALC)) == 1'b1);
+    wea              = (cstate == CALC_INIT);
+    en_calc          = (cstate == CALC);
+    count            = (cstate == CALC);
+    en_load          = (cstate == LOAD);
+    regf_rd          = (cstate == CALC_INIT);
+    regf_en          = (((cstate == CALC_INIT) || (cstate == LOAD))== 1'b1);
+    regf_wr          = (cstate == LOAD);
+  end
+
+  //! Output Mealy FSM logic
+  always @(*) begin : mealy_output_logic
+    enb              = (((cstate == CALC_INIT) || (prog == 1'b1)) == 1'b1);
+    web              = (prog == 1'b1);    
+  end
+
+
 endmodule
