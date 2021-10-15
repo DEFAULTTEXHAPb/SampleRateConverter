@@ -25,6 +25,10 @@ module ctrl_ramdrv #(
     output wire [ ADDR_WIDTH-1:0] coef_addr         //! Coefficient data address
 );
 
+  reg                   open_data_addr = 1'b0;
+  reg                   open_coef_addr = 1'b0;
+  reg                   open_regf_addr = 1'b0;
+
   //! D-trigger output for `data_addr`
   reg [ADDR_WIDTH-1:0] qdata_addr = {ADDR_WIDTH{1'b0}};
   //! Output wire port of `ctrl_ramdrv_ringbuf`
@@ -36,10 +40,27 @@ module ctrl_ramdrv #(
   //! Ring buffer initialization handshake
   wire assert_init = (((en_init == 1'b1) && (ringbuf_init == 1'b1)) == 1'b1);
 
+  wire dopen_data_addr = (en_calc | en_init);
+  wire dopen_coef_addr = en_calc;
+
+  wire [ADDR_WIDTH-1:0] ibuf_data_addr;
+  wire [ADDR_WIDTH-1:0] ibuf_coef_addr;
+
+  wire data_sel = (en_calc | conv_pass);
+
   assign clr = ringbuf_addr_clr | rst;
-  // assign data_addr = (en_calc == 1'b0)? data_hptr : rbuf_data_addr;
-  assign data_addr = qdata_addr;
+
   assign load = (coeff_load == 1'b1) || (en_init == 1'b1);
+
+  always @(negedge clk) begin
+    if (clr == 1'b1) begin
+      open_data_addr <= 1'b0;
+      open_coef_addr <= 1'b0;
+    end else begin
+      open_data_addr <= dopen_data_addr;
+      open_coef_addr <= dopen_coef_addr;
+    end
+  end
 
   //! Ring buffer
   ctrl_ramdrv_ringbuf#(
@@ -66,15 +87,33 @@ module ctrl_ramdrv #(
       .load           ( coeff_load     ),
       .cnt            ( en_calc        ),
       .coef_ptr       ( coef_ptr       ),
-      .coef_addr      ( coef_addr      )
+      .coef_addr      ( ibuf_coef_addr )
   );
 
-  always @(negedge clk) begin
-    if (rst == 1'b1) begin
-      qdata_addr <= {ADDR_WIDTH{1'b0}};
-    end else if ((en_init == 1'b1)||(en_calc == 1'b1)) begin
-      qdata_addr <= (en_calc == 1'b0)? data_hptr : rbuf_data_addr;
-    end
-  end
+  data_addr_mux#(
+      .WIDTH     ( ADDR_WIDTH )
+  )u_data_addr_mux(
+      .sel       ( data_sel       ),
+      .rbuf_addr ( rbuf_data_addr ),
+      .head_addr ( data_hptr ),
+      .data_addr  ( ibuf_data_addr  )
+  );
 
+  assign data_addr = (open_data_addr == 1'b0)? {ADDR_WIDTH{1'bz}} : ibuf_data_addr;
+  assign coef_addr = (open_coef_addr == 1'b0)? {ADDR_WIDTH{1'bz}} : ibuf_coef_addr;
+
+endmodule
+
+
+module data_addr_mux #(
+  parameter WIDTH = 16
+)(
+  input wire             sel,
+  input wire [WIDTH-1:0] rbuf_addr,
+  input wire [WIDTH-1:0] head_addr,
+  output wire [WIDTH-1:0] data_addr
+);
+
+  assign data_addr = (sel == 1'b0)? head_addr : rbuf_addr;
+  
 endmodule

@@ -30,6 +30,7 @@ module ctrl_ramdrv_ringbuf #(
   //! First cell address flag register
   reg                   first_register = 1'b1;
 
+
   //! Ring buffer tail pointer
   wire [ADDR_WIDTH-1:0] data_tail;
   //! Ring buffer counter flip flag

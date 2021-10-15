@@ -57,8 +57,8 @@ module ctrl_top #(
 
   wire [REGFILE_ADDR_WIDTH-1:0] result_reg, error_reg;
   wire [DATA_ADDR_WIDTH-1:0] data_bptr, data_lptr, data_hptr, filt_coef_ptr, coef_ptr;
-  wire ramdrv_clr = (en_load == 1'b1)/* || (en_init == 1'b1) || (en_fetch == 1'b1)*/ || (rst == 1'b1);
-  wire regfdrv_clr = (en_calc == 1'b1) || (en_init == 1'b1) || (en_fetch == 1'b1) || (rst == 1'b1);
+  wire ramdrv_clr = (en_load == 1'b1) || (rst == 1'b1);
+  wire regfdrv_clr = (en_fetch == 1'b1) | (rst == 1'b1) | (en_calc == 1'b1);
 
   assign coef_ptr = (prog == 1'b0)? filt_coef_ptr : load_coef_addr;
 
@@ -144,11 +144,6 @@ module ctrl_top #(
       .aerr       ( aerr       )
   );
 
-
-  // assign launch_valid = (en == 1'b1) && (trig_launch == 1'b0) && (launch == 1'b1);
-  // assign complete_valid = (trig_launch == 1'b1) && (idle == 1'b0);
-  // assign en_devs = ~prog && en;
-
   always @(posedge clk) begin : valid_latch
     if ((rst == 1'b1) || (en_load == 1'b1)) begin
       req_complete <= 1'b0;
@@ -156,14 +151,6 @@ module ctrl_top #(
       req_complete <= 1'b1;
     end
   end
-
-  // always @(posedge clk) begin : idle_latch
-  //   if (rst == 1'b0) begin
-  //     idle <= 1'b0;
-  //   end else if (complete_valid == 1'b1) begin
-  //     idle <= 1'b1;
-  //   end
-  // end
 
 endmodule
 

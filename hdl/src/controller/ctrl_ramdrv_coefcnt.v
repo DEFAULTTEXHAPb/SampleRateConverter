@@ -17,6 +17,8 @@ module ctrl_ramdrv_coefcnt #(
     
     //! Counter register
     reg [ADDR_WIDTH-1:0] coef_cnt = {ADDR_WIDTH{1'b0}};
+    //! First cell address flag register
+    reg                   first_register = 1'b1;
 
     assign coef_addr = coef_cnt;
 
@@ -24,10 +26,17 @@ module ctrl_ramdrv_coefcnt #(
     always @(negedge clk) begin : coef_offset_counting
       if (clr == 1'b1) begin
         coef_cnt <= {ADDR_WIDTH{1'b0}};
+        first_register <= 1'b1;
       end else if (load == 1'b1) begin
         coef_cnt <= coef_ptr;
+        first_register <= 1'b1;
       end if (cnt == 1'b1) begin
-        coef_cnt <= coef_cnt + 1'b1;
+        if (first_register == 1'b1) begin
+          coef_cnt <= coef_cnt;
+          first_register <= 1'b0;
+        end else begin
+          coef_cnt <= coef_cnt + 1'b1;          
+        end
       end
     end
 
