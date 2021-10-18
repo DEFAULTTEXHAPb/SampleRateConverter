@@ -42,13 +42,15 @@ module tb_Controller;
 
   always #100 clk <= !clk;
 
+  wire rst_n = ~rst;
+
 
   ctrl_top#(
       .REGFILE_ADDR_WIDTH ( REGFILE_ADDR_W ),
       .DATA_ADDR_WIDTH    ( DATA_ADDR_W )
   )u_ctrl_top(
       .clk                ( clk                ),
-      .rst                ( rst                ),
+      .rst_n              ( rst_n              ),
       .en                 ( en                 ),
       .prog               ( prog               ),
       .iw_valid           ( iw_valid           ),
@@ -86,7 +88,7 @@ module tb_Controller;
   wire [DATA_ADDR_W-1:0] data_hptr     = u_ctrl_top.u_ctrl_ifetch.data_hptr;
   wire [DATA_ADDR_W-1:0] filt_coef_ptr = u_ctrl_top.u_ctrl_ifetch.filt_coef_ptr;
   //fsm state
-  wire [2:0] dut_state = u_ctrl_top.u_ctrl_fsm.cstate;
+  wire [2:0] dut_state = u_ctrl_top.u_ctrl_fsm.state;
 
   // programm pass flag
   reg pass;
@@ -110,14 +112,14 @@ module tb_Controller;
   // system reset
   initial begin
     rst <= 1'b0;
-    #100 rst <= 1'b1;
-    #100 rst <= 1'b0;
+    #130 rst <= 1'b1;
+    #1136 rst <= 1'b0;
   end
 
   // system clock enable
   initial begin
     en <= 1'b0;
-    #300 en <= 1'b1;
+    #320 en <= 1'b1;
   end
 
   // // program single run detect

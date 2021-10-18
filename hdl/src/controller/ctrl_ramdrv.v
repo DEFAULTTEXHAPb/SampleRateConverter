@@ -10,10 +10,10 @@ module ctrl_ramdrv #(
     parameter integer ADDR_WIDTH   = 12
 ) (
     input  wire                   clk,              //! __Clock__
-    input  wire                   rst,              //! __Reset__
+    input  wire                   rst_n,            //! __Reset__
     input  wire                   en_init,          //! Output adreses initialization enable
     input  wire                   en_calc,          //! Address calculation enable
-    input  wire                   ringbuf_addr_clr, //! Ring buffer address registers clear
+    //input  wire                   ringbuf_addr_clr, //! Ring buffer address registers clear
     input  wire                   ringbuf_init,     //! Ring buffer initialization
     input  wire                   coeff_load,       //! Coefficien load from CPU flag
     input  wire [ ADDR_WIDTH-1:0] data_bptr,        //! Sample segment base pointer
@@ -25,16 +25,17 @@ module ctrl_ramdrv #(
     output wire [ ADDR_WIDTH-1:0] coef_addr         //! Coefficient data address
 );
 
+  //wire rst_n = ~rst;
+
   reg                   open_data_addr = 1'b0;
   reg                   open_coef_addr = 1'b0;
-  reg                   open_regf_addr = 1'b0;
 
   //! D-trigger output for `data_addr`
   reg [ADDR_WIDTH-1:0] qdata_addr = {ADDR_WIDTH{1'b0}};
   //! Output wire port of `ctrl_ramdrv_ringbuf`
   wire [  ADDR_WIDTH-1 : 0] rbuf_data_addr;
-  //! Ring buffer clear OR-gate
-  wire                      clr;
+  // //! Ring buffer clear OR-gate
+  // wire                      clr;
   //! Initial coefficient load OR-gate
   wire                      load;
   //! Ring buffer initialization handshake
@@ -46,19 +47,25 @@ module ctrl_ramdrv #(
   wire [ADDR_WIDTH-1:0] ibuf_data_addr;
   wire [ADDR_WIDTH-1:0] ibuf_coef_addr;
 
-  wire data_sel = (en_calc | conv_pass);
+  wire en = en_init | en_calc;
 
-  assign clr = ringbuf_addr_clr | rst;
+  wire data_sel = (en_calc | conv_pass);
 
   assign load = (coeff_load == 1'b1) || (en_init == 1'b1);
 
   always @(negedge clk) begin
-    if (clr == 1'b1) begin
-      open_data_addr <= 1'b0;
+    if (rst_n == 1'b0) begin
       open_coef_addr <= 1'b0;
-    end else begin
-      open_data_addr <= dopen_data_addr;
+    end else if (en == 1'b1) begin
       open_coef_addr <= dopen_coef_addr;
+    end
+  end
+
+  always @(negedge clk) begin
+    if (rst_n == 1'b0) begin
+      open_data_addr <= 1'b0;
+    end else if (en == 1'b1) begin
+      open_data_addr <= dopen_data_addr;
     end
   end
 
@@ -67,7 +74,7 @@ module ctrl_ramdrv #(
       .ADDR_WIDTH        ( ADDR_WIDTH )
   )u_ctrl_ramdrv_ringbuf(
       .clk            ( clk            ),
-      .clr            ( clr            ),
+      .rst_n          ( rst_n          ),
       .cnt            ( en_calc        ),
       .init           ( assert_init    ),
       .data_bptr      ( data_bptr      ),
@@ -83,7 +90,7 @@ module ctrl_ramdrv #(
       .ADDR_WIDTH     ( ADDR_WIDTH     )
   ) ctrl_ramdrv_coefcnt_dut (
       .clk            ( clk            ),
-      .clr            ( clr            ),
+      .rst_n          ( rst_n          ),
       .load           ( coeff_load     ),
       .cnt            ( en_calc        ),
       .coef_ptr       ( coef_ptr       ),

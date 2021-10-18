@@ -8,7 +8,7 @@ module ctrl_ramdrv_coefcnt #(
     parameter integer ADDR_WIDTH = 12
 ) (
     input  wire                  clk,      //! __Clock__
-    input  wire                  clr,      //! __Reset__
+    input  wire                  rst_n,      //! __Reset__
     input  wire                  load,     //! Coefficient load flag (and initial counter value set flag)
     input  wire                  cnt,      //! Counting enable
     input  wire [ADDR_WIDTH-1:0] coef_ptr, //! Initial coefficient pointer
@@ -24,7 +24,7 @@ module ctrl_ramdrv_coefcnt #(
 
     //! Counting process with counter value set
     always @(negedge clk) begin : coef_offset_counting
-      if (clr == 1'b1) begin
+      if (rst_n == 1'b0) begin
         coef_cnt <= {ADDR_WIDTH{1'b0}};
         first_register <= 1'b1;
       end else if (load == 1'b1) begin

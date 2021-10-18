@@ -9,13 +9,14 @@ module ctrl_top #(
     parameter integer DATA_ADDR_WIDTH = 4
 ) (
     input  wire                          clk,
-    input  wire                          rst,
+    input  wire                          rst_n,
     input  wire                          en,
     input  wire                          prog,
     input  wire                          iw_valid,
     input  wire [   DATA_ADDR_WIDTH-1:0] load_coef_addr,
     input  wire [      `INSTR_WIDTH-1:0] instr_word,
     output wire                          ptr_req,
+    output wire                          ptr_req_compl,
     output wire                          en_calc,
     output wire                          mac_init,
     output wire                          en_ram_pa,
@@ -34,6 +35,10 @@ module ctrl_top #(
     output wire [REGFILE_ADDR_WIDTH-1:0] aerr
     // output wire [REGFILE_ADDR_WIDTH-1:0] ard2
 );
+
+  //wire rst_n = ~rst;
+
+  wire clr_rbuf;
 
   reg  req_complete = 1'b0;
   reg  idle = 1'b0;
@@ -55,16 +60,19 @@ module ctrl_top #(
   wire ringbuf_init;
   wire count;
 
+  //wire ramdrv_rst_n = ~ringbuf_addr_clr | rst_n;
+
   wire [REGFILE_ADDR_WIDTH-1:0] result_reg, error_reg;
   wire [DATA_ADDR_WIDTH-1:0] data_bptr, data_lptr, data_hptr, filt_coef_ptr, coef_ptr;
-  wire ramdrv_clr = (en_load == 1'b1) || (rst == 1'b1);
-  wire regfdrv_clr = (en_fetch == 1'b1) | (rst == 1'b1) | (en_calc == 1'b1);
+  wire ramdrv_rst_n = ~((en_load == 1'b1) | (rst_n == 1'b0) | (ringbuf_addr_clr == 1'b1));
+  wire regfdrv_rst_n = ~((en_fetch == 1'b1) | (rst_n == 1'b0) | (en_calc == 1'b1));
 
   assign coef_ptr = (prog == 1'b0)? filt_coef_ptr : load_coef_addr;
+  assign ptr_req_compl = req_complete;
 
   ctrl_fsm u_ctrl_fsm(
       .clk              ( clk              ),
-      .rst              ( rst              ),
+      .rst_n            ( rst_n            ),
       .en               ( en               ),
       .iw_valid         ( iw_valid         ),
       .req_complete     ( req_complete     ),
@@ -96,7 +104,7 @@ module ctrl_top #(
       .DAWIDTH    ( DATA_ADDR_WIDTH )
   )u_ctrl_ifetch(
       .clk           ( clk           ),
-      .rst           ( rst           ),
+      .rst_n         ( rst_n         ),
       .en_fetch      ( en_fetch      ),
       .iw_valid      ( iw_valid      ),
       .instr_word    ( instr_word    ),
@@ -114,10 +122,10 @@ module ctrl_top #(
       .ADDR_WIDTH       ( DATA_ADDR_WIDTH )
   )u_ctrl_ramdrv(
       .clk              ( clk              ),
-      .rst              ( ramdrv_clr       ),
+      .rst_n            ( ramdrv_rst_n     ),
       .en_calc          ( en_calc          ),
       .en_init          ( en_init          ),
-      .ringbuf_addr_clr ( ringbuf_addr_clr ),
+      //.ringbuf_addr_clr ( ringbuf_addr_clr ),
       .ringbuf_init     ( ringbuf_init     ),
       .coeff_load       ( prog             ),
       .data_bptr        ( data_bptr        ),
@@ -133,7 +141,7 @@ module ctrl_top #(
       .WIDTH      ( REGFILE_ADDR_WIDTH )
   )u_ctrl_regfdrv(
       .clk        ( clk        ),
-      .rst        ( regfdrv_clr),
+      .rst_n      ( regfdrv_rst_n),
       .en_init    ( en_init    ),
       .en_load    ( en_load    ),
       .new_smp    ( new_in     ),
@@ -145,7 +153,7 @@ module ctrl_top #(
   );
 
   always @(posedge clk) begin : valid_latch
-    if ((rst == 1'b1) || (en_load == 1'b1)) begin
+    if ((rst_n == 1'b0) || (en_load == 1'b1)) begin
       req_complete <= 1'b0;
     end else if (iw_valid == 1'b1) begin
       req_complete <= 1'b1;

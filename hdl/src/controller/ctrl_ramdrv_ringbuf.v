@@ -9,7 +9,7 @@ module ctrl_ramdrv_ringbuf #(
     parameter integer ADDR_WIDTH = 12
 ) (
     input  wire                  clk,            //! __Clock__
-    input  wire                  clr,            //! __Reset__
+    input  wire                  rst_n,          //! __Reset__
     input  wire                  cnt,            //! Ring buffer address count flag
     input  wire                  init,           //! Ring buffer initialization flag
     input  wire [ADDR_WIDTH-1:0] data_bptr,      //! Sample segment base pointer
@@ -43,7 +43,7 @@ module ctrl_ramdrv_ringbuf #(
 
   //! Input addreses initial value set
   always @(negedge clk) begin : trig_proc
-    if (clr == 1'b1) begin
+    if (rst_n == 1'b0) begin
       q_data_hptr      <= {ADDR_WIDTH{1'b0}};
       q_data_bptr      <= {ADDR_WIDTH{1'b0}};
       q_data_lptr      <= {ADDR_WIDTH{1'b0}};
@@ -56,7 +56,7 @@ module ctrl_ramdrv_ringbuf #(
 
   //! Ring buffer counting process
   always @(negedge clk) begin : rbuf_count_proc
-    if (clr == 1'b1) begin
+    if (rst_n == 1'b0) begin
       q_rbuf_data_addr <= {ADDR_WIDTH{1'b0}};
       first_register   <= 1'b1;
     end else if ({init, cnt} == 2'b10) begin

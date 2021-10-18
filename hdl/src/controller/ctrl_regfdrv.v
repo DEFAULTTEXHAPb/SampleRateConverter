@@ -3,7 +3,7 @@ module ctrl_regfdrv #(
     parameter WIDTH = 3
   ) (
     input  wire             clk,        //! __Clock__
-    input  wire             rst,        //! __Reset__
+    input  wire             rst_n,        //! __Reset__
     input  wire             en_init,    //! Ring buffer initialization flag
     input  wire             en_load,    //! Register file load enable
     input  wire             new_smp,    //! New input sample flag
@@ -29,7 +29,7 @@ module ctrl_regfdrv #(
 
   // //! Destination erorr register file address value set
   always @(negedge clk) begin
-    if (rst == 1'b1) begin
+    if (rst_n == 1'b0) begin
       open_regf_addr <= 1'b0;
     end else if (dopen_regf_addr == 1'b1) begin
       open_regf_addr <= 1'b1;
@@ -38,7 +38,7 @@ module ctrl_regfdrv #(
 
   //! Result register file address value set
   always @(negedge clk) begin : ares_reg_set
-    if (rst == 1'b1) begin
+    if (rst_n == 1'b0) begin
       qares <= {WIDTH{1'b0}};
     end begin
       case ({en_init,en_load})
@@ -51,7 +51,7 @@ module ctrl_regfdrv #(
 
   //! Source erorr register file address value set
   always @(negedge clk) begin : aerr_reg_set
-    if (rst == 1'b1) begin
+    if (rst_n == 1'b0) begin
       qaerr <= {WIDTH{1'b0}};
     end if ((en_init == 1'b1)||(en_load == 1'b1)) begin
       qaerr <= error_reg;

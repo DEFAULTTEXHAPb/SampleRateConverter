@@ -11,7 +11,7 @@ module ctrl_ifetch #(
     parameter DAWIDTH  = 12     //! Data RAM address instruction field width
 )(
     input  wire                  clk,        //! __*Clock*__
-    input  wire                  rst,        //! __*Reset*__
+    input  wire                  rst_n,        //! __*Reset*__
     input  wire                  en_fetch,   //! Instruction fetch flag
     input  wire                  iw_valid,   //! Pointer struct content valid
     input       [INSTRWIDTH-1:0] instr_word, //! Word from instruction memory
@@ -30,13 +30,15 @@ module ctrl_ifetch #(
     //! Prefetch handshake
     wire assert_fetch = ((iw_valid == 1'b1)&(en_fetch == 1'b1)) == 1'b1;
 
+    //reg req_complete;
+
     initial begin
         {lstg_f, startups_f, result_reg, error_reg, data_bptr, data_lptr, data_hptr, filt_coef_ptr} = {INSTRWIDTH{1'b0}};
     end
 
     //! Instruction fetch process
     always @(negedge clk) begin : fetch_process
-        if (rst == 1'b1) begin
+        if (rst_n == 1'b0) begin
               {lstg_f, startups_f, result_reg, error_reg, data_bptr, data_lptr, data_hptr, filt_coef_ptr} <= {INSTRWIDTH{1'b0}};
         end else begin
             if (assert_fetch == 1'b1)

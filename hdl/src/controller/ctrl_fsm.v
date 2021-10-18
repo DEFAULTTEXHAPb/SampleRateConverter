@@ -26,7 +26,7 @@
 
 module ctrl_fsm (
     input  wire       clk,             //! __Clock__
-    input  wire       rst,             //! __Reset__
+    input  wire       rst_n,             //! __Reset__
     input  wire       en,              //! __Clock enable__
     input  wire       req_complete,    //! Pointer Struct request complete flag
     input  wire       iw_valid,        //! Pointer Struct content valid
@@ -68,76 +68,56 @@ module ctrl_fsm (
   localparam [1:0] CALC      = 2'b11; //! Convolution Calculation
   localparam [1:0] LOAD      = 2'b10; //! Load Result
 
-  reg [1:0] cstate = 2'b00;  //! Current state register
-  reg [1:0] nstate = 2'b00;  //! Next state register
+  reg [1:0] state = 2'b00;  //! State register
 
-`ifndef ONE_HOT
+  wire assert_ptr_req = (req_complete == 1'b1)&&(iw_valid == 1'b1);
 
-  //! Next state logic
-  always @(posedge clk) begin : state_switching
-    if (!rst) begin
-      cstate <= ((en == 1'b1)||(prog == 1'b0)) ? nstate : cstate;
-    end else begin
-      cstate <= PTR_REQ;
+  //! Switch path
+  always @(posedge clk) begin : state_machine
+    if (rst_n == 1'b0) begin
+      state <= PTR_REQ;
+    end else if (en == 1'b1) begin
+      case (state)
+        PTR_REQ:
+          if (assert_ptr_req == 1'b1)
+            state <= CALC_INIT;
+          else
+            state <= PTR_REQ;
+        CALC_INIT:
+          state <= CALC;
+        CALC:
+          if (count_passed == 1'b1)
+            state <= LOAD;
+          else
+            state <= CALC;
+        LOAD:
+          state <= PTR_REQ;
+      endcase
     end
   end
 
-  //! Switch path
-  always @(*) begin : next_state_switching_predition
-    case (cstate)
-      PTR_REQ:   nstate = ((req_complete == 1'b1)&&(iw_valid == 1'b1)) ? CALC_INIT : PTR_REQ;
-      CALC_INIT: nstate = CALC;
-      CALC:      nstate = (count_passed == 1'b1) ? LOAD : CALC;
-      LOAD:      nstate = PTR_REQ;
-    endcase
-  end
-
-`else
-
-  always @(posedge clk) begin : state_machine
-    case (cstate)
-      PTR_REQ: begin
-        if ((req_complete == 1'b1)&&(iw_valid == 1'b1)) begin
-          cstate <= CALC_INIT;
-        end else begin
-          cstate <= PTR_REQ;
-        end
-      end
-      CALC_INIT: cstate <= CALC;
-      CALC: begin
-        if (count_passed == 1'b1) begin
-          cstate <= LOAD;
-        end else begin
-          cstate <= CALC;
-        end
-      end
-      LOAD:      cstate <= PTR_REQ;
-    endcase
-  end
-
-`endif
 
   //! Output Moore FSM logic
   always @(*) begin : moore_output_logic
-    en_fetch         = (cstate == PTR_REQ);
-    ptrs_req         = (cstate == PTR_REQ);
-    ringbuf_addr_clr = (cstate == PTR_REQ);
-    en_init          = (cstate == CALC_INIT);
-    mac_init         = (cstate == CALC_INIT);
-    ringbuf_init     = (cstate == CALC_INIT);
-    ena              = (((cstate == CALC_INIT) || (cstate == CALC)) == 1'b1);
-    wea              = (cstate == CALC_INIT);
-    en_calc          = (cstate == CALC);
-    count            = (cstate == CALC);
-    en_load          = (cstate == LOAD);
-    regf_rd          = (cstate == CALC_INIT);
-    regf_en          = (((cstate == CALC_INIT) || (cstate == LOAD))== 1'b1);
-    regf_wr          = (cstate == LOAD);
+    en_fetch         = (state == PTR_REQ);
+    ptrs_req         = (state == PTR_REQ);
+    ringbuf_addr_clr = (state == PTR_REQ);
+    en_init          = (state == CALC_INIT);
+    mac_init         = (state == CALC_INIT);
+    ringbuf_init     = (state == CALC_INIT);
+    ena              = (((state == CALC_INIT) || (state == CALC)) == 1'b1);
+    wea              = (state == CALC_INIT);
+    en_calc          = (state == CALC);
+    count            = (state == CALC);
+    en_load          = (state == LOAD);
+    regf_rd          = (state == CALC_INIT);
+    regf_en          = (((state == CALC_INIT) || (state == LOAD))== 1'b1);
+    regf_wr          = (state == LOAD);
   end
 
   //! Output Mealy FSM logic
   always @(*) begin : mealy_output_logic
-    enb              = (((cstate == CALC_INIT) || (prog == 1'b1)) == 1'b1);
+    enb              = (((state == CALC_INIT) || (prog == 1'b1)) == 1'b1);
     web              = (prog == 1'b1);    
   end
 
