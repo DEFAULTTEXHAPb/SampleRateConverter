@@ -1,4 +1,7 @@
-# UPSAMPLER
+# Sample Rate Converter
+
+## NOTE!
+Repository is unfinished!!!!
 
 ## About project
 
